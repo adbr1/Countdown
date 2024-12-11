@@ -1,37 +1,19 @@
 import { useState, useEffect } from 'react';
+import { calculateTimeLeft, TimeLeft } from '../lib/time';
 
-export function useCountdown(targetTime: string) {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+export function useCountdown(targetTime: string, createdAt: number): TimeLeft {
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => 
+    calculateTimeLeft(targetTime, createdAt)
+  );
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const [hours, minutes] = targetTime.split(':').map(Number);
-      const target = new Date();
-      target.setHours(hours, minutes, 0, 0);
-
-      if (target.getTime() < now.getTime()) {
-        target.setDate(target.getDate() + 1);
-      }
-
-      const difference = target.getTime() - now.getTime();
-      
-      if (difference > 0) {
-        const hours = Math.floor(difference / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        
-        setTimeLeft({ hours, minutes, seconds });
-      } else {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-      }
+    const updateTimer = () => {
+      setTimeLeft(calculateTimeLeft(targetTime, createdAt));
     };
 
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
-
+    const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, [targetTime]);
+  }, [targetTime, createdAt]);
 
   return timeLeft;
 }

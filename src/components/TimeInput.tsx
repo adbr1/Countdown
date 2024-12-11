@@ -12,30 +12,27 @@ type TimeInputProps = {
 export function TimeInput({ targetTime, onTimeChange, className }: TimeInputProps) {
   return (
     <div className={cn(
-      "flex flex-col gap-3 bg-black/40 backdrop-blur-xl p-4 sm:p-6 rounded-2xl w-full",
-      "border border-white/10 transition-all duration-300",
-      "hover:bg-black/50 hover:border-white/20",
-      "sm:flex-row sm:items-center sm:gap-6",
+      "flex flex-col gap-2 bg-black/20 backdrop-blur-lg p-6 rounded-xl",
+      "border border-white/10 transition-all duration-300 hover:bg-black/30",
       className
     )}>
-      <div className="flex items-center gap-3 text-white/80">
-        <Clock className="h-4 sm:h-5 w-4 sm:w-5" />
-        <Label htmlFor="time-input" className="text-xs sm:text-sm font-medium">
-          Heure cible
-        </Label>
+      <Label htmlFor="time-input" className="text-white/80 text-sm">
+        Choisissez l'heure cible
+      </Label>
+      <div className="flex items-center gap-3 bg-white/5 p-3 rounded-md">
+        <Clock className="text-white/60 h-5 w-5" />
+        <input
+          id="time-input"
+          type="time"
+          value={targetTime}
+          onChange={(e) => onTimeChange(e.target.value)}
+          className={cn(
+            "bg-transparent text-white border-0 text-lg",
+            "focus:outline-none focus:ring-2 focus:ring-white/20 rounded-md px-2 py-1",
+            "appearance-none hover:bg-white/5 transition-colors"
+          )}
+        />
       </div>
-      
-      <input
-        id="time-input"
-        type="time"
-        value={targetTime}
-        onChange={(e) => onTimeChange(e.target.value)}
-        className={cn(
-          "flex-1 bg-black/20 text-white border-0 text-base sm:text-lg w-full",
-          "focus:outline-none focus:ring-2 focus:ring-white/20 rounded-xl px-3 py-2 sm:px-4",
-          "appearance-none hover:bg-black/30 transition-colors"
-        )}
-      />
     </div>
   );
 }
