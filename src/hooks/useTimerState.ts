@@ -1,18 +1,23 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { useCountdown } from './useCountdown';
+import { useCurrentTimeAsTimer } from './useCurrentTimeAsTimer';
 import { Timer } from '../types/timer';
 
 export function useTimerState() {
   const [timers, setTimers] = useLocalStorage<Timer[]>('timers', []);
   const [activeTimerId, setActiveTimerId] = useState<string | null>(null);
+  const currentTimeTimer = useCurrentTimeAsTimer();
 
-  const activeTimer = timers.find(t => t.id === activeTimerId) || timers[0];
-  const timeLeft = useCountdown(
-    activeTimer?.targetTime || '12:00',
-    activeTimer?.createdAt || Date.now()
-  );
-  const currentIndex = activeTimer ? timers.findIndex(t => t.id === activeTimer.id) : -1;
+  // Combine les compteurs personnalisés avec l'heure actuelle
+  const allTimers = useMemo(() => {
+    return [currentTimeTimer, ...timers];
+  }, [currentTimeTimer, timers]);
+
+  const activeTimer = allTimers.find(t => t.id === activeTimerId) || allTimers[0];
+  const timeLeft = useCountdown(activeTimer);
+  
+  const currentIndex = allTimers.findIndex(t => t.id === activeTimer.id);
 
   const handleCreateTimer = (newTimer: Omit<Timer, 'id' | 'createdAt'>) => {
     const timer: Timer = {
@@ -25,30 +30,38 @@ export function useTimerState() {
   };
 
   const handleEditTimer = (updatedTimer: Timer) => {
+    if (updatedTimer.id === 'current-time') return;
     setTimers(timers.map(t => t.id === updatedTimer.id ? updatedTimer : t));
   };
 
   const handleDeleteTimer = (id: string) => {
+    if (id === 'current-time') return;
     setTimers(timers.filter(t => t.id !== id));
     if (activeTimerId === id) {
-      setActiveTimerId(timers[0]?.id || null);
+      setActiveTimerId(allTimers[0].id);
     }
   };
 
   const nextTimer = () => {
-    if (timers.length <= 1) return;
-    const nextIndex = (currentIndex + 1) % timers.length;
-    setActiveTimerId(timers[nextIndex].id);
+    if (allTimers.length <= 1) return;
+    const nextIndex = (currentIndex + 1) % allTimers.length;
+    setActiveTimerId(allTimers[nextIndex].id);
   };
 
   const previousTimer = () => {
-    if (timers.length <= 1) return;
-    const previousIndex = (currentIndex - 1 + timers.length) % timers.length;
-    setActiveTimerId(timers[previousIndex].id);
+    if (allTimers.length <= 1) return;
+    const previousIndex = (currentIndex - 1 + allTimers.length) % allTimers.length;
+    setActiveTimerId(allTimers[previousIndex].id);
+  };
+
+  const selectTimerByIndex = (index: number) => {
+    if (index >= 0 && index < allTimers.length) {
+      setActiveTimerId(allTimers[index].id);
+    }
   };
 
   return {
-    timers,
+    timers: allTimers,
     activeTimer,
     timeLeft,
     handleCreateTimer,
@@ -57,6 +70,7 @@ export function useTimerState() {
     setActiveTimerId,
     nextTimer,
     previousTimer,
-    currentIndex
+    currentIndex,
+    selectTimerByIndex
   };
 }

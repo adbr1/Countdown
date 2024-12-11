@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { parseTimeString } from '../lib/time-parser';
 
 export function useCurrentTime() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -13,8 +14,14 @@ export function useCurrentTime() {
     return () => clearInterval(timer);
   }, []);
 
+  const timeString = format(currentTime, 'HH:mm:ss');
+  const { hours, minutes, seconds } = parseTimeString(timeString);
+
   return {
-    time: format(currentTime, 'HH:mm:ss'),
-    date: format(currentTime, 'EEEE d MMMM', { locale: fr })
+    time: timeString,
+    date: format(currentTime, 'EEEE d MMMM', { locale: fr }),
+    hours,
+    minutes,
+    seconds
   };
 }

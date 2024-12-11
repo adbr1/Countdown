@@ -17,8 +17,17 @@ export function CreateTimerDialog({ onClose, onCreate }: CreateTimerDialogProps)
     onClose();
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-slate-900 rounded-xl p-6 w-full max-w-md border border-white/10">
         <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5" />

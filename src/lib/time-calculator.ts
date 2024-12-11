@@ -1,12 +1,5 @@
-/**
- * Convertit une chaîne d'heure au format "HH:mm" en Date
- */
-export function parseTime(timeString: string): Date {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const date = new Date();
-  date.setHours(hours, minutes, 0, 0);
-  return date;
-}
+import { TimeLeft } from '../types/time';
+import { parseTimeToDate } from './time-parser';
 
 /**
  * Calcule la durée totale en secondes entre deux timestamps
@@ -33,13 +26,9 @@ export function calculateCurrentTime(): TimeLeft {
 /**
  * Calcule le temps restant pour un timer
  */
-export function calculateTimeLeft(targetTime: string, createdAt: number, isCurrentTime = false): TimeLeft {
-  if (isCurrentTime) {
-    return calculateCurrentTime();
-  }
-
+export function calculateRemainingTime(targetTime: string, createdAt: number): TimeLeft {
   const now = new Date();
-  const target = parseTime(targetTime);
+  const target = parseTimeToDate(targetTime);
   const creation = new Date(createdAt);
   
   // Durée totale initiale en secondes
@@ -68,13 +57,4 @@ export function calculateTimeLeft(targetTime: string, createdAt: number, isCurre
     totalSeconds,
     targetTotalSeconds
   };
-}
-
-export interface TimeLeft {
-  hours: number;
-  minutes: number;
-  seconds: number;
-  isFinished: boolean;
-  totalSeconds: number;
-  targetTotalSeconds: number;
 }

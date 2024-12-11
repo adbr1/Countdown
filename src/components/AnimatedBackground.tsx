@@ -18,6 +18,9 @@ export function AnimatedBackground({ timeLeft, children, isMonochrome }: Animate
     minBreathDuration: 0.5  // 0.5 secondes à la fin
   });
 
+  // Ensure opacity is always a valid number between 0 and 1
+  const overlayOpacity = Math.min(0.4, Math.max(0, Number.isFinite(intensity) ? intensity * 0.6 : 0));
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Fond animé */}
@@ -55,7 +58,7 @@ export function AnimatedBackground({ timeLeft, children, isMonochrome }: Animate
       <div 
         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
         style={{
-          opacity: Math.min(0.4, intensity * 0.6)
+          opacity: overlayOpacity
         }}
       />
 

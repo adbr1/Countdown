@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function useWakeLock() {
   const [isWakeLockEnabled, setIsWakeLockEnabled] = useState(false);
@@ -8,10 +8,13 @@ export function useWakeLock() {
 
     const requestWakeLock = async () => {
       try {
-        wakeLock = await navigator.wakeLock.request('screen');
-        setIsWakeLockEnabled(true);
+        // Seulement demander le wakeLock si la page est visible
+        if (document.visibilityState === 'visible') {
+          wakeLock = await navigator.wakeLock.request('screen');
+          setIsWakeLockEnabled(true);
+        }
       } catch (err) {
-        console.error('Failed to request wake lock:', err);
+        console.warn('Wake Lock non disponible:', err);
         setIsWakeLockEnabled(false);
       }
     };
@@ -22,13 +25,16 @@ export function useWakeLock() {
       }
     };
 
+    // Initialisation
     requestWakeLock();
+    
+    // Gestionnaires d'événements
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (wakeLock) {
-        wakeLock.release();
+        wakeLock.release().catch(console.warn);
       }
     };
   }, []);
