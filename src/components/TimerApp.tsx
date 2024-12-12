@@ -8,10 +8,25 @@ import { TimerDisplay } from './TimerDisplay';
 import { Toast, ToastTitle, ToastDescription, ToastViewport } from './ui/toast';
 import { InstallPWA } from './InstallPWA';
 import { Container } from './layout/Container';
+import { EventList } from './events/EventList';
+import { ICalImportDialog } from './ICalImportDialog';
 import { useTimerState } from '../hooks/useTimerState';
+import { useCalendar } from '../hooks/useCalendar';
 import { Timer } from '../types/timer';
 import { useNotifications } from '../hooks/useNotifications';
+import { cn } from '../lib/utils';
+import { Event } from '../types/event';
+import { createTimerFromEvent } from '../lib/event-to-timer';
 import '../styles/animations.css';
+
+const defaultTimeLeft = {
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+  isFinished: false,
+  totalSeconds: 0,
+  targetTotalSeconds: 0
+};
 
 export function TimerApp() {
   const {
@@ -28,6 +43,16 @@ export function TimerApp() {
     selectTimerByIndex
   } = useTimerState();
 
+  const {
+    events,
+    showEvents,
+    showICalDialog,
+    hasEvents,
+    handleImportEvents,
+    handleCalendarToggle,
+    setShowICalDialog
+  } = useCalendar();
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showTimerList, setShowTimerList] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -36,33 +61,10 @@ export function TimerApp() {
 
   const { requestNotificationPermission } = useNotifications();
 
-  // Gestionnaire pour la création d'un nouveau timer
-  const handleTimerCreate = (timer: Omit<Timer, 'id' | 'createdAt'>) => {
-    handleCreateTimer(timer);
-    setShowCreateDialog(false);
+  const handleEventClick = (event: Event) => {
+    const newTimer = createTimerFromEvent(event);
+    handleCreateTimer(newTimer);
     setShowToast(true);
-  };
-
-  // Gestionnaire pour l'édition d'un timer
-  const handleTimerEdit = (timer: Timer) => {
-    handleEditTimer(timer);
-    setTimerToEdit(null);
-    setShowToast(true);
-  };
-
-  // Gestionnaire pour la suppression d'un timer
-  const handleTimerDelete = (id: string) => {
-    handleDeleteTimer(id);
-    setShowToast(true);
-  };
-
-  const defaultTimeLeft = {
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    isFinished: false,
-    totalSeconds: 0,
-    targetTotalSeconds: 0
   };
 
   return (
@@ -76,9 +78,16 @@ export function TimerApp() {
           onToggleMonochrome={() => setIsMonochrome(!isMonochrome)}
           onOpenTimerList={() => setShowTimerList(true)}
           onCreateTimer={() => setShowCreateDialog(true)}
+          onToggleCalendar={handleCalendarToggle}
+          onOpenICalDialog={() => setShowICalDialog(true)}
+          showEvents={showEvents}
+          hasEvents={hasEvents}
         />
 
-        <div className="min-h-screen flex items-center justify-center p-4">
+        <div className={cn(
+          "min-h-screen flex items-center justify-center p-4",
+          showEvents && events.length > 0 ? "pr-[420px]" : ""
+        )}>
           <TimerDisplay
             timer={activeTimer}
             timeLeft={timeLeft}
@@ -91,24 +100,36 @@ export function TimerApp() {
           />
         </div>
 
+        {showEvents && events.length > 0 && (
+          <EventList 
+            events={events}
+            onEventClick={handleEventClick}
+            className="animate-slide-in-from-right"
+          />
+        )}
+
+        {/* Dialogs */}
+        {showCreateDialog && (
+          <CreateTimerDialog
+            onClose={() => setShowCreateDialog(false)}
+            onCreate={handleCreateTimer}
+          />
+        )}
+
         {showTimerList && (
           <TimerListDialog
             timers={timers}
-            activeTimerId={activeTimer?.id || null}
+            activeTimerId={activeTimer?.id}
             onSelect={(timer) => {
               setActiveTimerId(timer.id);
               setShowTimerList(false);
             }}
-            onEdit={setTimerToEdit}
-            onDelete={handleTimerDelete}
+            onEdit={(timer) => {
+              setTimerToEdit(timer);
+              setShowTimerList(false);
+            }}
+            onDelete={handleDeleteTimer}
             onClose={() => setShowTimerList(false)}
-          />
-        )}
-
-        {showCreateDialog && (
-          <CreateTimerDialog
-            onClose={() => setShowCreateDialog(false)}
-            onCreate={handleTimerCreate}
           />
         )}
 
@@ -116,10 +137,20 @@ export function TimerApp() {
           <EditTimerDialog
             timer={timerToEdit}
             onClose={() => setTimerToEdit(null)}
-            onSave={handleTimerEdit}
+            onSave={(updatedTimer) => {
+              handleEditTimer(updatedTimer);
+              setTimerToEdit(null);
+            }}
           />
         )}
 
+        {showICalDialog && (
+          <ICalImportDialog
+            onClose={() => setShowICalDialog(false)}
+            onImport={handleImportEvents}
+          />
+        )}
+        
         <InstallPWA />
         
         <Toast 
@@ -128,12 +159,10 @@ export function TimerApp() {
           className="bg-black/40 border-white/10 text-white animate-slide-up"
         >
           <ToastTitle className="text-white">
-            {timeLeft.isFinished ? 'Minuteur terminé !' : 'Compteur mis à jour'}
+            Nouveau compteur créé
           </ToastTitle>
           <ToastDescription className="text-white/80">
-            {timeLeft.isFinished && activeTimer
-              ? `Le minuteur "${activeTimer.name}" est terminé`
-              : 'Le compteur a été mis à jour avec succès'}
+            Le compteur a été créé à partir de l'événement sélectionné
           </ToastDescription>
         </Toast>
         <ToastViewport />

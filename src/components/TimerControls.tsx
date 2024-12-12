@@ -1,20 +1,40 @@
-import React from 'react';
-import { Palette, Menu, Plus, Maximize2, Minimize2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Menu, Palette, Plus, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useFullscreen } from '../hooks/useFullscreen';
-import { useWakeLock } from '../hooks/useWakeLock';
 
-// ... (rest of the imports)
+interface TimerControlsProps {
+  isMonochrome: boolean;
+  onToggleMonochrome: () => void;
+  onOpenTimerList: () => void;
+  onCreateTimer: () => void;
+  onToggleCalendar: () => void;
+  onOpenICalDialog: () => void;
+  showEvents: boolean;
+  hasEvents: boolean;
+  className?: string;
+}
 
 export function TimerControls({
   isMonochrome,
   onToggleMonochrome,
   onOpenTimerList,
   onCreateTimer,
+  onToggleCalendar,
+  onOpenICalDialog,
+  showEvents,
+  hasEvents,
   className
 }: TimerControlsProps) {
   const { isFullscreen, toggleFullscreen } = useFullscreen();
-  const isWakeLockEnabled = useWakeLock();
+
+  const handleCalendarClick = () => {
+    if (hasEvents) {
+      onToggleCalendar();
+    } else {
+      onOpenICalDialog();
+    }
+  };
 
   return (
     <div className={cn(
@@ -59,6 +79,19 @@ export function TimerControls({
         ) : (
           <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 text-white/80" />
         )}
+      </button>
+
+      <div className="w-px h-4 sm:h-6 bg-white/10" />
+
+      <button
+        onClick={handleCalendarClick}
+        className={cn(
+          "p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors",
+          (showEvents && hasEvents) && "bg-white/10"
+        )}
+        title={hasEvents ? "Afficher/Masquer le calendrier" : "Importer un calendrier"}
+      >
+        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white/80" />
       </button>
 
       <div className="w-px h-4 sm:h-6 bg-white/10" />
